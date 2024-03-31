@@ -33,7 +33,7 @@ type Notifier struct {
 	channelID        int64
 }
 
-func New(
+func NewNotifier(
 	articleProvider ArticleProvider,
 	summarizer Summarizer,
 	bot *tgbotapi.BotAPI,
@@ -48,6 +48,26 @@ func New(
 		sendInterval:     sendInterval,
 		lookupTimeWindow: lookupTimeWindow,
 		channelID:        channelID,
+	}
+}
+
+func (n *Notifier) Start(ctx context.Context) error {
+	ticker := time.NewTicker(n.sendInterval)
+	defer ticker.Stop()
+
+	if err := n.SelectAndSendArticle(ctx); err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := n.SelectAndSendArticle(ctx); err != nil {
+				return err
+			}
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 	}
 }
 
@@ -74,6 +94,8 @@ func (n *Notifier) SelectAndSendArticle(ctx context.Context) error {
 
 	return n.articles.MarkAsPosted(ctx, article.ArticleID)
 }
+
+var redundantNewLines = regexp.MustCompile(`\n{3,}`)
 
 func (n *Notifier) extractSummary(ctx context.Context, article model.Article) (string, error) {
 	var r io.Reader
@@ -103,6 +125,10 @@ func (n *Notifier) extractSummary(ctx context.Context, article model.Article) (s
 	return "\n\n" + summary, nil
 }
 
+func cleanText(text string) string {
+	return redundantNewLines.ReplaceAllString(text, "\n")
+}
+
 func (n *Notifier) sendArticle(article model.Article, summary string) error {
 	const msgFormat = "*%s*%s\n\n%s"
 
@@ -120,10 +146,4 @@ func (n *Notifier) sendArticle(article model.Article, summary string) error {
 	}
 
 	return nil
-}
-
-var redundantNewLines = regexp.MustCompile(`\n{3,}`)
-
-func cleanText(text string) string {
-	return redundantNewLines.ReplaceAllString(text, "\n")
 }

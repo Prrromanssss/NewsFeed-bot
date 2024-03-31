@@ -76,7 +76,7 @@ func (s *ArticlePostgresStorage) GetAllNotPosted(ctx context.Context, since time
 	}), nil
 }
 
-func (s *ArticlePostgresStorage) MarkPosted(ctx context.Context, id int64) error {
+func (s *ArticlePostgresStorage) MarkAsPosted(ctx context.Context, id int64) error {
 	conn, err := s.db.Connx(ctx)
 	if err != nil {
 		return err
