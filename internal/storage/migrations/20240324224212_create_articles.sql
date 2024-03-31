@@ -4,10 +4,10 @@ CREATE TABLE articles (
     article_id int GENERATED ALWAYS AS IDENTITY,
     source_id int NOT NULL,
     title varchar(255) NOT NULL,
-    link varchar(255) NOT NULL,
+    link varchar(255) NOT NULL UNIQUE,
     summary text NOT NULL,
     published_at timestamp NOT NULL,
-    created_at timestamp NOT NULL,
+    created_at timestamp NOT NULL DEFAULT NOW(),
     posted_at timestamp,
 
     PRIMARY KEY(article_id),
