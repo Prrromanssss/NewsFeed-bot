@@ -16,6 +16,7 @@ type Source struct {
 	Name      string
 	FeedUrl   string
 	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Article struct {

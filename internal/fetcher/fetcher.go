@@ -79,8 +79,6 @@ func (f *Fetcher) Fetch(ctx context.Context) error {
 	for _, src := range sources {
 		wg.Add(1)
 
-		rssSource := source.NewRSSSourceFromModule(src)
-
 		go func(source Source) {
 			defer wg.Done()
 
@@ -94,7 +92,7 @@ func (f *Fetcher) Fetch(ctx context.Context) error {
 				log.Printf("[ERROR] Processing items from source %s: %v", source.Name(), err)
 				return
 			}
-		}(rssSource)
+		}(source.NewRSSSourceFromModule(src))
 	}
 
 	wg.Wait()

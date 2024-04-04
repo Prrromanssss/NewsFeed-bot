@@ -63,13 +63,18 @@ func (s *ArticlePostgresStorage) GetAllNotPosted(ctx context.Context, since time
 	}
 
 	return lo.Map(articles, func(article dbArticle, _ int) model.Article {
+		postedAt := time.Time{}
+
+		if article.PostedAt != nil {
+			postedAt = *article.PostedAt
+		}
 		return model.Article{
 			ArticleID:   article.ArticleID,
 			SourceID:    article.SourceID,
 			Title:       article.Title,
 			Link:        article.Link,
 			Summary:     article.Summary,
-			PostedAt:    article.PostedAt,
+			PostedAt:    postedAt,
 			PublishedAt: article.PublishedAt,
 			CreatedAt:   article.CreatedAt,
 		}
@@ -85,7 +90,7 @@ func (s *ArticlePostgresStorage) MarkAsPosted(ctx context.Context, id int64) err
 
 	if _, err := conn.ExecContext(
 		ctx,
-		`UPDATE articles SET posted_at = $1::timestamp WHERE id = $2`,
+		`UPDATE articles SET posted_at = $1::timestamp WHERE article_id = $2`,
 		time.Now(),
 		id,
 	); err != nil {
@@ -96,12 +101,12 @@ func (s *ArticlePostgresStorage) MarkAsPosted(ctx context.Context, id int64) err
 }
 
 type dbArticle struct {
-	ArticleID   int64     `db:"article_id"`
-	SourceID    int64     `db:"source_id"`
-	Title       string    `db:"title"`
-	Link        string    `db:"link"`
-	Summary     string    `db:"summary"`
-	PublishedAt time.Time `db:"published_at"`
-	CreatedAt   time.Time `db:"created_at"`
-	PostedAt    time.Time `db:"posted_at"`
+	ArticleID   int64      `db:"article_id"`
+	SourceID    int64      `db:"source_id"`
+	Title       string     `db:"title"`
+	Link        string     `db:"link"`
+	Summary     string     `db:"summary"`
+	PublishedAt time.Time  `db:"published_at"`
+	CreatedAt   time.Time  `db:"created_at"`
+	PostedAt    *time.Time `db:"posted_at"`
 }

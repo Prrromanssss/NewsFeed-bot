@@ -8,13 +8,17 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Prrromanssss/NewsFeed-bot/internal/bot"
+	"github.com/Prrromanssss/NewsFeed-bot/internal/botkit"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/config"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/fetcher"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/notifier"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/storage"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/summary"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -23,7 +27,6 @@ func main() {
 		log.Printf("[ERROR] Failed to create bot: %v", err)
 		return
 	}
-
 	db, err := sqlx.Connect("postgres", config.Get().DatabaseDSN)
 	if err != nil {
 		log.Printf("[ERROR] Failed to connect to database: %v", err)
@@ -53,6 +56,9 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
+	newsBot := botkit.NewBot(botAPI)
+	newsBot.RegisterCmdView("start", bot.ViewCmdStart())
+
 	go func(ctx context.Context) {
 		if err := fetcher.Start(ctx); err != nil {
 			if !errors.Is(err, context.Canceled) {
@@ -63,13 +69,19 @@ func main() {
 			log.Printf("[INFO] Fetcher stopped")
 		}
 	}(ctx)
+	go func(ctx context.Context) {
+		if err := notifier.Start(ctx); err != nil {
+			if !errors.Is(err, context.Canceled) {
+				log.Printf("[ERROR] Failed to start notifier: %v", err)
+				return
+			}
 
-	if err := notifier.Start(ctx); err != nil {
-		if !errors.Is(err, context.Canceled) {
-			log.Printf("[ERROR] Failed to start notifier: %v", err)
-			return
+			log.Printf("[INFO] Notifier stopped")
 		}
+	}(ctx)
 
-		log.Printf("[INFO] Notifier stopped")
+	if err := newsBot.Run(ctx); err != nil {
+		log.Printf("[ERROR] failed to run botkit: %v", err)
 	}
+
 }

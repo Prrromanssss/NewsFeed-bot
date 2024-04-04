@@ -42,7 +42,7 @@ func (s *SourcePostgresStorage) SourceByID(ctx context.Context, id int64) (*mode
 	defer conn.Close()
 
 	var source dbSource
-	if err := conn.GetContext(ctx, &source, `SELECT * FROM sources WHERE id = $1`, id); err != nil {
+	if err := conn.GetContext(ctx, &source, `SELECT * FROM sources WHERE source_id = $1`, id); err != nil {
 		return nil, err
 	}
 
@@ -84,7 +84,7 @@ func (s *SourcePostgresStorage) Delete(ctx context.Context, id int64) error {
 	}
 	defer conn.Close()
 
-	if _, err := conn.ExecContext(ctx, `DELETE FROM sources WHERE id = $1`, id); err != nil {
+	if _, err := conn.ExecContext(ctx, `DELETE FROM sources WHERE source_id = $1`, id); err != nil {
 		return err
 	}
 
@@ -92,8 +92,9 @@ func (s *SourcePostgresStorage) Delete(ctx context.Context, id int64) error {
 }
 
 type dbSource struct {
-	SourceID  int64     `db:"id"`
+	SourceID  int64     `db:"source_id"`
 	Name      string    `db:"name"`
 	FeedUrl   string    `db:"feed_url"`
 	CreatedAt time.Time `db:"created_at"`
+	UpdatedAt time.Time `db:"updated_at"`
 }
