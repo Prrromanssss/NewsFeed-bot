@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/Prrromanssss/NewsFeed-bot/internal/bot"
+	"github.com/Prrromanssss/NewsFeed-bot/internal/bot/middleware"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/botkit"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/config"
 	"github.com/Prrromanssss/NewsFeed-bot/internal/fetcher"
@@ -58,10 +59,34 @@ func main() {
 
 	newsBot := botkit.NewBot(botAPI)
 	newsBot.RegisterCmdView("start", bot.ViewCmdStart())
-	newsBot.RegisterCmdView("addsource", bot.ViewCmdAddSource(sourceStorage))
-	newsBot.RegisterCmdView("listsources", bot.ViewCmdListSource(sourceStorage))
-	newsBot.RegisterCmdView("getsource", bot.ViewCmdGetSource(sourceStorage))
-	newsBot.RegisterCmdView("deletesource", bot.ViewCmdDeleteSource(sourceStorage))
+	newsBot.RegisterCmdView(
+		"addsource",
+		middleware.AdminsOnly(
+			config.Get().TelegramChannelID,
+			bot.ViewCmdAddSource(sourceStorage),
+		),
+	)
+	newsBot.RegisterCmdView(
+		"listsources",
+		middleware.AdminsOnly(
+			config.Get().TelegramChannelID,
+			bot.ViewCmdListSource(sourceStorage),
+		),
+	)
+	newsBot.RegisterCmdView(
+		"getsource",
+		middleware.AdminsOnly(
+			config.Get().TelegramChannelID,
+			bot.ViewCmdGetSource(sourceStorage),
+		),
+	)
+	newsBot.RegisterCmdView(
+		"deletesource",
+		middleware.AdminsOnly(
+			config.Get().TelegramChannelID,
+			bot.ViewCmdDeleteSource(sourceStorage),
+		),
+	)
 
 	go func(ctx context.Context) {
 		if err := fetcher.Start(ctx); err != nil {
