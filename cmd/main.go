@@ -58,6 +58,10 @@ func main() {
 
 	newsBot := botkit.NewBot(botAPI)
 	newsBot.RegisterCmdView("start", bot.ViewCmdStart())
+	newsBot.RegisterCmdView("addsource", bot.ViewCmdAddSource(sourceStorage))
+	newsBot.RegisterCmdView("listsources", bot.ViewCmdListSource(sourceStorage))
+	newsBot.RegisterCmdView("getsource", bot.ViewCmdGetSource(sourceStorage))
+	newsBot.RegisterCmdView("deletesource", bot.ViewCmdDeleteSource(sourceStorage))
 
 	go func(ctx context.Context) {
 		if err := fetcher.Start(ctx); err != nil {
